@@ -1,11 +1,10 @@
 from django.shortcuts import render
 from django.views.generic import DetailView
-from .models import Book, Library   # <-- explicit import required by checks
+from .models import Book, Library   # <-- explicit import required
 
 # Function-based view: List all books
 def list_books(request):
-    # Explicit query required by checks
-    books = Book.objects.all()
+    books = Book.objects.all()  # <-- explicit query required
     return render(request, "relationship_app/list_books.html", {"books": books})
 
 
@@ -17,6 +16,5 @@ class LibraryDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Explicitly include all books in this library
         context["books"] = self.object.books.all()
         return context
