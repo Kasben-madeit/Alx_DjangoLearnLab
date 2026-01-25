@@ -24,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-+=u84c#xgyk$&r$&yo@^l1b)a9ugn5ahih+6#q_#g(w8p9t!04'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False   # ✅ Always False in production
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]  # ✅ Add your domain/hostnames here in production
 
 
 # Application definition
@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'bookshelf.apps.BookshelfConfig',   # <-- CustomUser lives here
     'relationship_app',                 # <-- keep this intact
+    # 'csp',  # ✅ Uncomment if you install django-csp for Content Security Policy
 ]
 
 MIDDLEWARE = [
@@ -50,6 +51,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'csp.middleware.CSPMiddleware',  # ✅ Uncomment if using django-csp
 ]
 
 ROOT_URLCONF = 'LibraryProject.urls'
@@ -129,3 +131,22 @@ LOGOUT_REDIRECT_URL = "login"       # where users go after logout
 
 # ✅ Custom User Model (critical update)
 AUTH_USER_MODEL = "bookshelf.CustomUser"
+
+
+# --- Security Best Practices ---
+SECURE_BROWSER_XSS_FILTER = True          # ✅ Prevent reflected XSS
+SECURE_CONTENT_TYPE_NOSNIFF = True        # ✅ Prevent MIME-type sniffing
+X_FRAME_OPTIONS = "DENY"                  # ✅ Prevent clickjacking
+
+CSRF_COOKIE_SECURE = True                 # ✅ CSRF cookie only over HTTPS
+SESSION_COOKIE_SECURE = True              # ✅ Session cookie only over HTTPS
+
+# HTTP Strict Transport Security (forces HTTPS)
+SECURE_HSTS_SECONDS = 31536000            # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
+# Content Security Policy (if django-csp is installed)
+# CSP_DEFAULT_SRC = ("'self'",)
+# CSP_SCRIPT_SRC = ("'self'", "https://trustedscripts.example.com")
+# CSP_STYLE_SRC = ("'self'", "https://trustedstyles.example.com")
