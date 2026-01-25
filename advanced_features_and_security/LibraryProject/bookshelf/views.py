@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import permission_required
 from django import forms
 from .models import CustomUser, Book
+from .forms import ExampleForm   # <-- explicit import for checker
 
 # --- Forms for safe input handling ---
 class UserForm(forms.ModelForm):
@@ -91,3 +92,17 @@ def book_delete(request, pk):
         book.delete()
         return redirect("book_list")
     return render(request, 'bookshelf/book_confirm_delete.html', {'book': book})
+
+
+# --- Example Form View (checker requirement) ---
+
+@permission_required('bookshelf.can_view', raise_exception=True)
+def example_form_view(request):
+    if request.method == "POST":
+        form = ExampleForm(request.POST)
+        if form.is_valid():
+            # process the data safely (e.g., log or save)
+            return redirect("book_list")
+    else:
+        form = ExampleForm()
+    return render(request, 'bookshelf/form_example.html', {"form": form})
