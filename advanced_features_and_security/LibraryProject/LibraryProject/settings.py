@@ -89,18 +89,10 @@ DATABASES = {
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 
@@ -108,11 +100,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
 
@@ -129,20 +118,26 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 LOGIN_REDIRECT_URL = "list_books"   # where users go after login
 LOGOUT_REDIRECT_URL = "login"       # where users go after logout
 
-# ✅ Custom User Model (critical update)
+# ✅ Custom User Model
 AUTH_USER_MODEL = "bookshelf.CustomUser"
 
 
 # --- Security Best Practices ---
-SECURE_BROWSER_XSS_FILTER = True          # ✅ Prevent reflected XSS
-SECURE_CONTENT_TYPE_NOSNIFF = True        # ✅ Prevent MIME-type sniffing
-X_FRAME_OPTIONS = "DENY"                  # ✅ Prevent clickjacking
 
-CSRF_COOKIE_SECURE = True                 # ✅ CSRF cookie only over HTTPS
-SESSION_COOKIE_SECURE = True              # ✅ Session cookie only over HTTPS
+# Redirect all HTTP requests to HTTPS
+SECURE_SSL_REDIRECT = True           # ✅ Force HTTPS for all requests
+
+# Browser protections
+SECURE_BROWSER_XSS_FILTER = True     # ✅ Prevent reflected XSS
+SECURE_CONTENT_TYPE_NOSNIFF = True   # ✅ Prevent MIME-type sniffing
+X_FRAME_OPTIONS = "DENY"             # ✅ Prevent clickjacking
+
+# Secure cookies
+CSRF_COOKIE_SECURE = True            # ✅ CSRF cookie only over HTTPS
+SESSION_COOKIE_SECURE = True         # ✅ Session cookie only over HTTPS
 
 # HTTP Strict Transport Security (forces HTTPS)
-SECURE_HSTS_SECONDS = 31536000            # 1 year
+SECURE_HSTS_SECONDS = 31536000       # ✅ 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
