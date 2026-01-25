@@ -20,7 +20,6 @@ class LibraryDetailView(DetailView):   # <-- must use DetailView
         return context
     
 
-from django.shortcuts import render, redirect
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
@@ -46,3 +45,18 @@ def register(request):
     else:
         form = UserCreationForm()
     return render(request, "relationship_app/register.html", {"form": form})
+
+from django.http import HttpResponseForbidden
+from django.contrib.auth.decorators import login_required
+from .models import UserProfile
+
+@login_required
+def admin_view(request):
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        if profile.role == "Admin":   # <-- exact string required
+            return render(request, "relationship_app/admin_view.html")
+        else:
+            return HttpResponseForbidden("You do not have permission to access this page.")
+    except UserProfile.DoesNotExist:
+        return HttpResponseForbidden("No profile found for this user.")
