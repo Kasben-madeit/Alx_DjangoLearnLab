@@ -2,6 +2,9 @@ from django.shortcuts import render
 from django.views.generic.detail import DetailView   # <-- explicit import required
 from .models import Book
 from .models import Library   # <-- explicit line required
+from django.contrib.auth.decorators import user_passes_test, login_required
+from .models import UserProfile
+
 
 # Function-based view: List all books
 def list_books(request):
@@ -60,3 +63,29 @@ def admin_view(request):
             return HttpResponseForbidden("You do not have permission to access this page.")
     except UserProfile.DoesNotExist:
         return HttpResponseForbidden("No profile found for this user.")
+    
+
+# Helper functions for role checks
+def is_librarian(user):
+    try:
+        return user.userprofile.role == "Librarian"
+    except UserProfile.DoesNotExist:
+        return False
+
+def is_member(user):
+    try:
+        return user.userprofile.role == "Member"
+    except UserProfile.DoesNotExist:
+        return False
+
+
+# Librarian-only view
+@user_passes_test(is_librarian)
+def librarian_view(request):
+    return render(request, "relationship_app/librarian_view.html")
+
+
+# Member-only view
+@user_passes_test(is_member)
+def member_view(request):
+    return render(request, "relationship_app/member_view.html")
