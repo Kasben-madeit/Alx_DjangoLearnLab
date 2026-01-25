@@ -141,6 +141,10 @@ SECURE_HSTS_SECONDS = 31536000       # ✅ 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
+# Trust the proxy header for HTTPS
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# ✅ Ensures Django recognizes HTTPS requests forwarded by Nginx/Apache
+
 # Content Security Policy (if django-csp is installed)
 # CSP_DEFAULT_SRC = ("'self'",)
 # CSP_SCRIPT_SRC = ("'self'", "https://trustedscripts.example.com")
