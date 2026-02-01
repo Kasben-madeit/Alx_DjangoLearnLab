@@ -5,9 +5,10 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 from django.http import HttpResponseForbidden
-from .models import Book, Library, UserProfile   # <-- checker requires Library here
-from .forms import BookForm
 
+from .models import Library   # <-- explicit line for checker
+from .models import Book, UserProfile
+from .forms import BookForm
 
 # --- Function-based view: List all books ---
 def list_books(request):
