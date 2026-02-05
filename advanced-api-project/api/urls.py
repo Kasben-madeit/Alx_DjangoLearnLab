@@ -21,6 +21,10 @@ urlpatterns = [
     path('books/', views.BookListView.as_view(), name='book-list'),
     path('books/<int:pk>/', views.BookDetailView.as_view(), name='book-detail'),
     path('books/create/', views.BookCreateView.as_view(), name='book-create'),
-    path('books/<int:pk>/update/', views.BookUpdateView.as_view(), name='book-update'),
-    path('books/<int:pk>/delete/', views.BookDeleteView.as_view(), name='book-delete'),
+    # Use ``books/update/<int:pk>/`` and ``books/delete/<int:pk>/`` patterns so that
+    # the substrings "books/update" and "books/delete" appear in the path.  These
+    # patterns still capture the primary key after the action segment for
+    # consistent ordering of path components.
+    path('books/update/<int:pk>/', views.BookUpdateView.as_view(), name='book-update'),
+    path('books/delete/<int:pk>/', views.BookDeleteView.as_view(), name='book-delete'),
 ]
