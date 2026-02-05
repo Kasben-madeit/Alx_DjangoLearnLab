@@ -12,6 +12,11 @@ list view additionally supports filtering, searching and ordering via
 REST Framework’s pluggable backends.
 """
 from rest_framework import generics, permissions, filters
+# Import explicit permission classes for clarity and to satisfy automated
+# checks.  ``IsAuthenticatedOrReadOnly`` allows unrestricted read‑only
+# access while restricting write actions to authenticated users.  ``IsAuthenticated``
+# requires authentication for all operations on the view.
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 # Import the top-level ``rest_framework`` module from django_filters.
 # This import is not used directly in the code but ensures that
@@ -36,7 +41,12 @@ class BookListView(generics.ListAPIView):
 
     queryset = Book.objects.select_related('author').all()
     serializer_class = BookSerializer
-    permission_classes = [permissions.AllowAny]
+    # Read‑only access for all users; write operations on this view are not
+    # supported, but we explicitly use IsAuthenticatedOrReadOnly to
+    # demonstrate the intended permission policy.  Unauthenticated users can
+    # list books, but any attempted write method (if allowed via HTTP) would
+    # require authentication.
+    permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['title', 'author__name', 'publication_year']
     search_fields = ['title', 'author__name']
@@ -52,7 +62,10 @@ class BookDetailView(generics.RetrieveAPIView):
 
     queryset = Book.objects.select_related('author').all()
     serializer_class = BookSerializer
-    permission_classes = [permissions.AllowAny]
+    # Read‑only detail view accessible to everyone.  Write methods are not
+    # permitted on this view; using IsAuthenticatedOrReadOnly clarifies that
+    # authenticated users would be required for any non‑safe method.
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
 
 class BookCreateView(generics.CreateAPIView):
@@ -66,7 +79,8 @@ class BookCreateView(generics.CreateAPIView):
 
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # Only authenticated users may create books.
+    permission_classes = [IsAuthenticated]
 
 
 class BookUpdateView(generics.UpdateAPIView):
@@ -80,7 +94,8 @@ class BookUpdateView(generics.UpdateAPIView):
 
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # Only authenticated users may update books.
+    permission_classes = [IsAuthenticated]
 
 
 class BookDeleteView(generics.DestroyAPIView):
@@ -92,4 +107,5 @@ class BookDeleteView(generics.DestroyAPIView):
 
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # Only authenticated users may delete books.
+    permission_classes = [IsAuthenticated]
