@@ -65,7 +65,10 @@ class BookAPITestCase(APITestCase):
             'publication_year': date.today().year - 2,
             'author': self.author.id,
         }
-        self.client.force_authenticate(user=self.user)
+        # Log in the test user via the client.  Using ``login`` instead of
+        # ``force_authenticate`` exercises the full authentication stack and
+        # ensures that session and authentication middleware are engaged.
+        self.client.login(username=self.user.username, password='pass')
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Book.objects.count(), 2)
@@ -80,7 +83,8 @@ class BookAPITestCase(APITestCase):
             'publication_year': future_year,
             'author': self.author.id,
         }
-        self.client.force_authenticate(user=self.user)
+        # Authenticate the user with ``login`` to perform the request
+        self.client.login(username=self.user.username, password='pass')
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('publication_year', response.data)
@@ -93,7 +97,8 @@ class BookAPITestCase(APITestCase):
             'publication_year': self.book.publication_year,
             'author': self.author.id,
         }
-        self.client.force_authenticate(user=self.user)
+        # Use ``login`` to authenticate instead of ``force_authenticate``
+        self.client.login(username=self.user.username, password='pass')
         response = self.client.put(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Refresh from DB and verify the change
@@ -103,7 +108,8 @@ class BookAPITestCase(APITestCase):
     def test_delete_book(self) -> None:
         """Authenticated users can delete a book and receive a 204 status."""
         url = reverse('book-delete', args=[self.book.id])
-        self.client.force_authenticate(user=self.user)
+        # Authenticate via ``login`` to ensure session handling is used
+        self.client.login(username=self.user.username, password='pass')
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Book.objects.count(), 0)
