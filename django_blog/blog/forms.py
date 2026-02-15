@@ -72,3 +72,10 @@ class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ["content"]
+
+    def clean_content(self):
+        """Ensure that the comment content is not empty or whitespace only."""
+        content = self.cleaned_data.get("content", "")
+        if not content.strip():
+            raise forms.ValidationError("Comment cannot be empty.")
+        return content

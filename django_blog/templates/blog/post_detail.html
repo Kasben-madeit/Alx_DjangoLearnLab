@@ -32,8 +32,8 @@
             <p>{{ comment.content|linebreaks }}</p>
             {% if user == comment.author %}
             <p>
-                <a href="{% url 'edit-comment' object.pk comment.id %}">Edit</a> |
-                <a href="{% url 'delete-comment' object.pk comment.id %}">Delete</a>
+                <a href="{% url 'comment-update' post_id=object.pk comment_id=comment.id %}">Edit</a> |
+                <a href="{% url 'comment-delete' post_id=object.pk comment_id=comment.id %}">Delete</a>
             </p>
             {% endif %}
         </div>
@@ -44,7 +44,7 @@
     {% endif %}
     {% if user.is_authenticated %}
     <h3>Leave a comment</h3>
-    <form action="{% url 'add-comment' object.pk %}" method="post">
+    <form action="{% url 'comment-create' post_id=object.pk %}" method="post">
         {% csrf_token %}
         {{ comment_form.as_p }}
         <button type="submit">Submit Comment</button>

@@ -188,47 +188,8 @@ def add_comment(request, pk: int):
     return redirect("post-detail", pk=pk)
 
 
-@login_required
-def edit_comment(request, pk: int, comment_id: int):
-    """
-    Allow the author of a comment to edit its content. Access is restricted to
-    the comment's original author.
-    """
-    comment = get_object_or_404(Comment, id=comment_id, post__pk=pk)
-    if comment.author != request.user:
-        messages.error(request, "You do not have permission to edit this comment.")
-        return redirect("post-detail", pk=pk)
-
-    if request.method == "POST":
-        form = CommentForm(request.POST, instance=comment)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Your comment has been updated!")
-            return redirect("post-detail", pk=pk)
-    else:
-        form = CommentForm(instance=comment)
-
-    return render(
-        request,
-        "blog/comment_form.html",
-        {"form": form, "object": comment},
-    )
-
-
-@login_required
-def delete_comment(request, pk: int, comment_id: int):
-    """
-    Allow the author of a comment to delete it. After deletion the user is
-    redirected back to the post detail page.
-    """
-    comment = get_object_or_404(Comment, id=comment_id, post__pk=pk)
-    if comment.author != request.user:
-        messages.error(request, "You do not have permission to delete this comment.")
-        return redirect("post-detail", pk=pk)
-    if request.method == "POST":
-        comment.delete()
-        messages.success(request, "Your comment has been deleted.")
-    return redirect("post-detail", pk=pk)
+# Remove legacy function‑based comment edit and delete views. Comment CRUD
+# functionality is now handled via class‑based views below.
 
 
 class TagListView(ListView):
@@ -249,6 +210,104 @@ class TagListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["tag_name"] = self.kwargs.get("tag_name")
+        return context
+
+
+# Comment CRUD class‑based views
+class CommentCreateView(LoginRequiredMixin, CreateView):
+    """
+    Create a new comment for a given post.  The post ID is provided via the
+    URL keyword argument ``post_id``.  On successful creation the user is
+    redirected back to the post detail page.
+    """
+
+    model = Comment
+    form_class = CommentForm
+    template_name = "blog/comment_form.html"
+
+    def form_valid(self, form):
+        post = get_object_or_404(Post, pk=self.kwargs["post_id"])
+        form.instance.author = self.request.user
+        form.instance.post = post
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        """
+        Add the parent post ID to the context so the template can provide
+        a cancel link back to the post detail page when creating a new
+        comment.
+        """
+        context = super().get_context_data(**kwargs)
+        context.setdefault("post_id", self.kwargs.get("post_id"))
+        return context
+
+    def get_success_url(self) -> str:
+        return reverse("post-detail", kwargs={"pk": self.kwargs["post_id"]})
+
+
+class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    Edit an existing comment.  Only the comment's author may update it.  The
+    comment ID and its parent post ID are provided via the URL.
+    """
+
+    model = Comment
+    form_class = CommentForm
+    template_name = "blog/comment_form.html"
+    pk_url_kwarg = "comment_id"
+
+    def get_object(self, queryset=None):  # type: ignore[override]
+        return get_object_or_404(
+            Comment,
+            id=self.kwargs["comment_id"],
+            post__pk=self.kwargs["post_id"],
+        )
+
+    def test_func(self) -> bool:
+        comment = self.get_object()
+        return self.request.user == comment.author
+
+    def get_success_url(self) -> str:
+        return reverse("post-detail", kwargs={"pk": self.kwargs["post_id"]})
+
+    def get_context_data(self, **kwargs):
+        """
+        Include the parent post ID in the context for use in the cancel link.
+        """
+        context = super().get_context_data(**kwargs)
+        context.setdefault("post_id", self.kwargs.get("post_id"))
+        return context
+
+
+class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    """
+    Delete a comment.  Only the comment's author may delete it.  A confirmation
+    page is displayed before deletion.  On success the user is redirected back
+    to the post detail page.
+    """
+
+    model = Comment
+    template_name = "blog/comment_confirm_delete.html"
+    pk_url_kwarg = "comment_id"
+
+    def get_object(self, queryset=None):  # type: ignore[override]
+        return get_object_or_404(
+            Comment,
+            id=self.kwargs["comment_id"],
+            post__pk=self.kwargs["post_id"],
+        )
+
+    def test_func(self) -> bool:
+        comment = self.get_object()
+        return self.request.user == comment.author
+
+    def get_success_url(self) -> str:
+        return reverse("post-detail", kwargs={"pk": self.kwargs["post_id"]})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Pass the parent post ID to the template for the cancel link
+        context["post_id"] = self.kwargs.get("post_id")
         return context
 
 
