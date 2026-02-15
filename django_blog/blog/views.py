@@ -192,6 +192,25 @@ def add_comment(request, pk: int):
 # functionality is now handled via class‑based views below.
 
 
+class PostByTagListView(ListView):
+    """List posts filtered by tag slug/name. Used for /tags/<slug:tag_slug>/ URLs."""
+
+    model = Post
+    template_name = "blog/tag_posts.html"
+    context_object_name = "posts"
+    paginate_by = 10
+
+    def get_queryset(self):
+        tag_slug = self.kwargs.get("tag_slug", "")
+        # We treat slug as the tag name (case-insensitive) for simplicity.
+        return Post.objects.filter(tags__name__iexact=tag_slug).distinct()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["tag_name"] = self.kwargs.get("tag_slug")
+        return context
+
+
 class TagListView(ListView):
     """
     Display all posts associated with a given tag. The tag name is passed in

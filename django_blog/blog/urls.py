@@ -66,5 +66,6 @@ path(
 ),
 
     path("tag/<str:tag_name>/", views.TagListView.as_view(), name="tag-posts"),
+        path("tags/<slug:tag_slug>/", views.PostByTagListView.as_view(), name="posts-by-tag"),
     path("search/", views.search, name="search"),
 ]

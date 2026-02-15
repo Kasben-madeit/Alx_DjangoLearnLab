@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Django Blog{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'blog/style.css' %}">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <a href="{% url 'blog-home' %}" class="navbar-brand">Django Blog</a>
+            <ul class="nav-links">
+                <li><a href="{% url 'blog-home' %}">Home</a></li>
+                {% if user.is_authenticated %}
+                <li><a href="{% url 'post-create' %}">New Post</a></li>
+                <li><a href="{% url 'profile' %}">Profile</a></li>
+                <li><a href="{% url 'logout' %}">Logout</a></li>
+                {% else %}
+                <li><a href="{% url 'login' %}">Login</a></li>
+                <li><a href="{% url 'register' %}">Register</a></li>
+                {% endif %}
+            </ul>
+            <form action="{% url 'search' %}" method="get" class="search-form">
+                <input type="text" name="q" placeholder="Search" value="{{ request.GET.q }}">
+                <button type="submit">Search</button>
+            </form>
+        </nav>
+    </header>
+    <div class="container">
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </div>
+    <footer>
+        <p>&copy; {{ now|date:"Y" }} Django Blog.</p>
+    </footer>
+</body>
+</html>

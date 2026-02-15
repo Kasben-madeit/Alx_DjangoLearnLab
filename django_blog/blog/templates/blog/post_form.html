@@ -1,0 +1,10 @@
+{% extends "blog/base.html" %}
+{% block title %}{{ form.instance.pk|yesno:"Edit Post,New Post" }} - Django Blog{% endblock %}
+{% block content %}
+<h1>{{ form.instance.pk|yesno:"Edit Post,New Post" }}</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save</button>
+</form>
+{% endblock %}

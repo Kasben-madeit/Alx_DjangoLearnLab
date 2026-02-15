@@ -1,0 +1,16 @@
+{% extends "blog/base.html" %}
+{% block title %}Edit Comment - Django Blog{% endblock %}
+{% block content %}
+{% comment %}Show appropriate heading for create or update actions{% endcomment %}
+<h1>{% if object %}Edit Comment{% else %}Add Comment{% endif %}</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">{% if object %}Save{% else %}Submit Comment{% endif %}</button>
+    {% if object %}
+    <a href="{% url 'post-detail' object.post.pk %}">Cancel</a>
+    {% else %}
+    <a href="{% url 'post-detail' pk=post_id %}">Cancel</a>
+    {% endif %}
+</form>
+{% endblock %}
