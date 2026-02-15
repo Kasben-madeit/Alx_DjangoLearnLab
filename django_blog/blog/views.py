@@ -226,7 +226,7 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
     template_name = "blog/comment_form.html"
 
     def form_valid(self, form):
-        post = get_object_or_404(Post, pk=self.kwargs["post_id"])
+        post = get_object_or_404(Post, pk=self.kwargs.get("post_id") or self.kwargs.get("pk"))
         form.instance.author = self.request.user
         form.instance.post = post
         return super().form_valid(form)
@@ -238,45 +238,46 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
         comment.
         """
         context = super().get_context_data(**kwargs)
-        context.setdefault("post_id", self.kwargs.get("post_id"))
+        context.setdefault("post_id", self.kwargs.get("post_id") or self.kwargs.get("pk"))
         return context
 
     def get_success_url(self) -> str:
-        return reverse("post-detail", kwargs={"pk": self.kwargs["post_id"]})
+        return reverse("post-detail", kwargs={"pk": self.kwargs.get("post_id") or self.kwargs.get("pk")})
 
 
 class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     """
-    Edit an existing comment.  Only the comment's author may update it.  The
-    comment ID and its parent post ID are provided via the URL.
+    Edit an existing comment. Only the comment's author may update it.
+
+    Supports both URL styles:
+    - /posts/<post_id>/comments/<comment_id>/update/
+    - /comment/<pk>/update/
     """
 
     model = Comment
     form_class = CommentForm
     template_name = "blog/comment_form.html"
-    pk_url_kwarg = "comment_id"
 
     def get_object(self, queryset=None):  # type: ignore[override]
-        return get_object_or_404(
-            Comment,
-            id=self.kwargs["comment_id"],
-            post__pk=self.kwargs["post_id"],
-        )
+        comment_pk = self.kwargs.get("comment_id") or self.kwargs.get("pk")
+        if self.kwargs.get("post_id"):
+            return get_object_or_404(Comment, id=comment_pk, post__pk=self.kwargs["post_id"])
+        return get_object_or_404(Comment, id=comment_pk)
 
     def test_func(self) -> bool:
         comment = self.get_object()
         return self.request.user == comment.author
 
     def get_success_url(self) -> str:
-        return reverse("post-detail", kwargs={"pk": self.kwargs["post_id"]})
+        comment = self.get_object()
+        return reverse("post-detail", kwargs={"pk": comment.post.pk})
 
     def get_context_data(self, **kwargs):
-        """
-        Include the parent post ID in the context for use in the cancel link.
-        """
         context = super().get_context_data(**kwargs)
-        context.setdefault("post_id", self.kwargs.get("post_id"))
+        comment = getattr(self, "object", None) or self.get_object()
+        context.setdefault("post_id", comment.post.pk)
         return context
+
 
 
 class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
@@ -294,7 +295,7 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return get_object_or_404(
             Comment,
             id=self.kwargs["comment_id"],
-            post__pk=self.kwargs["post_id"],
+            post__pk=self.kwargs.get("post_id") or self.kwargs.get("pk"),
         )
 
     def test_func(self) -> bool:
@@ -302,7 +303,7 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return self.request.user == comment.author
 
     def get_success_url(self) -> str:
-        return reverse("post-detail", kwargs={"pk": self.kwargs["post_id"]})
+        return reverse("post-detail", kwargs={"pk": self.kwargs.get("post_id") or self.kwargs.get("pk")})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

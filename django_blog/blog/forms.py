@@ -10,6 +10,15 @@ from django.contrib.auth.models import User
 
 from .models import Post, Comment, Profile, Tag
 
+class TagWidget(forms.TextInput):
+    """Widget for comma-separated tag input."""
+
+    def __init__(self, *args, **kwargs):
+        attrs = kwargs.pop("attrs", {})
+        attrs.setdefault("placeholder", "e.g. django,python,web")
+        super().__init__(attrs=attrs, *args, **kwargs)
+
+
 
 class UserRegisterForm(UserCreationForm):
     """
@@ -56,7 +65,7 @@ class PostForm(forms.ModelForm):
     tags = forms.CharField(
         required=False,
         help_text="Comma‑separated list of tags.",
-        widget=forms.TextInput(attrs={"placeholder": "e.g. django,python,web"}),
+        widget=TagWidget(),
     )
 
     class Meta:
@@ -64,6 +73,11 @@ class PostForm(forms.ModelForm):
         fields = ["title", "content", "tags"]
 
 
+    widgets = {
+        \"title\": forms.TextInput(attrs={\"class\": \"form-control\"}),
+        \"content\": forms.Textarea(attrs={\"rows\": 8, \"class\": \"form-control\"}),
+        \"tags\": TagWidget(),
+    }
 class CommentForm(forms.ModelForm):
     """
     Basic form used for creating and updating comments on a post.
