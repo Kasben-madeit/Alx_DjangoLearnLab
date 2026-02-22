@@ -44,15 +44,11 @@ class RegistrationSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'password']
 
     def create(self, validated_data: dict) -> User:
-        """Create a new user using Django's recommended API.
-
-        The use of ``get_user_model().objects.create_user`` ensures that
-        any custom behaviour defined on the user manager is respected.
-        """
         password = validated_data.pop('password')
-        # Use the default manager to create the user correctly (tests expect this)
-        user = get_user_model().objects.create_user(password=password, **validated_data)
-        # A token is automatically created via a signal in many DRF setups; create one here manually
+        user = User.objects.create(**validated_data)
+        user.set_password(password)
+        user.save()
+        # Create an auth token so that the user can authenticate immediately
         Token.objects.create(user=user)
         return user
 

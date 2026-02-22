@@ -11,8 +11,7 @@ that users can only modify their own content.
 
 from __future__ import annotations
 
-from rest_framework import generics
-from rest_framework.generics import get_object_or_404
+from django.shortcuts import get_object_or_404
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -52,20 +51,16 @@ class PostViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     """ViewSet for managing comments on a specific post."""
 
-    queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated, IsAuthorOrReadOnly]
 
     def get_queryset(self):
         post_id = self.kwargs.get('post_pk')
-        # Filter comments belonging to a specific post while still demonstrating
-        # use of Comment.objects.all() as a base queryset
-        return Comment.objects.all().filter(post_id=post_id)
+        return Comment.objects.filter(post_id=post_id)
 
     def perform_create(self, serializer: CommentSerializer) -> Comment:
         post_id = self.kwargs.get('post_pk')
-        # Use generics.get_object_or_404 to satisfy test expectations
-        post = generics.get_object_or_404(Post, pk=post_id)
+        post = get_object_or_404(Post, pk=post_id)
         comment = serializer.save(author=self.request.user, post=post)
         # notify the post author of a new comment (if not commenting on own post)
         if post.author != self.request.user:
@@ -86,7 +81,7 @@ class FeedView(APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
         following_users = user.following.all()
-        posts = Post.objects.filter(author__in=following_users).order_by('-created_at')
+        posts = Post.objects.filter(author__in=following_users)
         serializer = PostSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data)
 
@@ -97,9 +92,8 @@ class LikePostView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk: int, *args, **kwargs):
-        post = generics.get_object_or_404(Post, pk=pk)
-        # Use Like.objects.get_or_create with user first to satisfy code checks
-        like, created = Like.objects.get_or_create(user=request.user, post=post)
+        post = get_object_or_404(Post, pk=pk)
+        like, created = Like.objects.get_or_create(post=post, user=request.user)
         if not created:
             return Response({'detail': 'Already liked'}, status=status.HTTP_400_BAD_REQUEST)
         # create a notification for the post author
@@ -119,7 +113,7 @@ class UnlikePostView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk: int, *args, **kwargs):
-        post = generics.get_object_or_404(Post, pk=pk)
+        post = get_object_or_404(Post, pk=pk)
         like = Like.objects.filter(post=post, user=request.user).first()
         if not like:
             return Response({'detail': 'Not liked'}, status=status.HTTP_400_BAD_REQUEST)
