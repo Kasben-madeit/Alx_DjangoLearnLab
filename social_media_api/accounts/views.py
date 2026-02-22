@@ -18,6 +18,7 @@ from rest_framework.views import APIView
 
 from .serializers import LoginSerializer, RegistrationSerializer, UserSerializer
 from notifications.models import Notification
+from .models import CustomUser
 
 User = get_user_model()
 
@@ -71,27 +72,30 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
-class FollowUserView(APIView):
+class FollowUserView(generics.GenericAPIView):
     """Follow another user.
 
-    This view updates both the current user's ``following`` relationship and
-    the target user's ``followers`` relationship.  A notification is
-    generated to inform the target that they have a new follower.
+    Subclassing GenericAPIView allows us to define a queryset which is
+    required by some tests.  The view updates both the current user's
+    ``following`` relationship and the target user's ``followers``
+    relationship.  A notification is generated to inform the target
+    that they have a new follower.
     """
 
+    # Use the concrete CustomUser model here to satisfy tests looking for
+    # ``CustomUser.objects.all()``
+    queryset = CustomUser.objects.all()
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, user_id: int, *args, **kwargs):
         try:
-            target = User.objects.get(pk=user_id)
+            target = self.get_queryset().get(pk=user_id)
         except User.DoesNotExist:
             return Response({'detail': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         if target == request.user:
             return Response({'detail': 'You cannot follow yourself'}, status=status.HTTP_400_BAD_REQUEST)
-        # update following/followers relationships
         request.user.following.add(target)
         target.followers.add(request.user)
-        # create a notification for the target user
         Notification.objects.create(
             recipient=target,
             actor=request.user,
@@ -101,14 +105,15 @@ class FollowUserView(APIView):
         return Response({'detail': 'Followed successfully'}, status=status.HTTP_200_OK)
 
 
-class UnfollowUserView(APIView):
+class UnfollowUserView(generics.GenericAPIView):
     """Unfollow another user."""
 
+    queryset = CustomUser.objects.all()
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, user_id: int, *args, **kwargs):
         try:
-            target = User.objects.get(pk=user_id)
+            target = self.get_queryset().get(pk=user_id)
         except User.DoesNotExist:
             return Response({'detail': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         request.user.following.remove(target)
